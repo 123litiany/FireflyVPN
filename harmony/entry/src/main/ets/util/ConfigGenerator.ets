@@ -82,12 +82,6 @@ export class ConfigGenerator {
       .key('detour').string('direct')
       .objectEnd();
     w.arrayEnd();
-    w.key('rules').arrayStart()
-      .objectStart()
-      .key('rule_set').string('geosite-cn')
-      .key('server').string('dns-direct')
-      .objectEnd()
-      .arrayEnd();
     w.key('final').string('dns-proxy');
     w.key('strategy').string(ConfigGenerator.dnsStrategy(settings.ipv6Mode));
     w.objectEnd();
@@ -124,17 +118,14 @@ export class ConfigGenerator {
 
   private static writeRoute(w: JsonWriter, settings: AppSettings): void {
     w.key('route').objectStart();
-    w.key('auto_detect_interface').bool(true);
+    // 鸿蒙扩展进程通过 VpnConnection.protectProcessNet() 绕过 VPN，
+    // 因此不需要 auto_detect_interface，也避免了 OHOS 上 netlink 监控失败的风险。
+    w.key('auto_detect_interface').bool(false);
     w.key('final').string('proxy');
     w.key('rules').arrayStart();
     // 私有地址直连
     w.objectStart()
       .key('ip_is_private').bool(true)
-      .key('outbound').string('direct')
-      .objectEnd();
-    // 本应用自身流量绕过 VPN，避免回环
-    w.objectStart()
-      .key('package_name').arrayStart().string(AppContextBundleNameHolder.bundleName()).arrayEnd()
       .key('outbound').string('direct')
       .objectEnd();
     w.arrayEnd();

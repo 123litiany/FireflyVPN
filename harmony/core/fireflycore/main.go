@@ -9,15 +9,20 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/option"
 	singtun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing/common/control"
 	"github.com/sagernet/sing/common/logger"
+	"github.com/sagernet/sing/common/x/list"
 	"github.com/sagernet/sing/service"
 )
 
@@ -47,17 +52,113 @@ func (p *fireflyPlatform) UsePlatformInterface() bool {
 }
 
 func (p *fireflyPlatform) OpenInterface(options *singtun.Options, platformOptions option.TunPlatformOptions) (singtun.Tun, error) {
+	if p.tunFd < 0 {
+		return nil, errors.New("no tun fd provided (self-test config must not contain a tun inbound)")
+	}
 	options.FileDescriptor = p.tunFd
 	options.AutoRoute = false
 	return singtun.New(*options)
 }
 
 func (p *fireflyPlatform) UsePlatformDefaultInterfaceMonitor() bool {
+	return true
+}
+
+// 默认接口监控：sing-box 在存在 PlatformInterface 时必定调用
+// CreateDefaultInterfaceMonitor 并注册回调，返回 nil 会导致空指针崩溃。
+type fireflyInterfaceMonitor struct {
+	access      sync.Mutex
+	callbacks   list.List[singtun.DefaultInterfaceUpdateCallback]
+	current     atomic.Pointer[control.Interface]
+	myInterface string
+}
+
+func discoverDefaultInterface() *control.Interface {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil
+	}
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		if strings.HasPrefix(iface.Name, "tun") {
+			continue
+		}
+		return &control.Interface{
+			Index:        iface.Index,
+			MTU:          iface.MTU,
+			Name:         iface.Name,
+			HardwareAddr: iface.HardwareAddr,
+			Flags:        iface.Flags,
+		}
+	}
+	return nil
+}
+
+func (m *fireflyInterfaceMonitor) Start() error {
+	iface := discoverDefaultInterface()
+	if iface != nil {
+		m.current.Store(iface)
+		m.emit(iface, 0)
+	}
+	return nil
+}
+
+func (m *fireflyInterfaceMonitor) Close() error {
+	return nil
+}
+
+func (m *fireflyInterfaceMonitor) DefaultInterface() *control.Interface {
+	return m.current.Load()
+}
+
+func (m *fireflyInterfaceMonitor) OverrideAndroidVPN() bool {
 	return false
 }
 
+func (m *fireflyInterfaceMonitor) AndroidVPNEnabled() bool {
+	return false
+}
+
+func (m *fireflyInterfaceMonitor) RegisterCallback(callback singtun.DefaultInterfaceUpdateCallback) *list.Element[singtun.DefaultInterfaceUpdateCallback] {
+	m.access.Lock()
+	defer m.access.Unlock()
+	return m.callbacks.PushBack(callback)
+}
+
+func (m *fireflyInterfaceMonitor) UnregisterCallback(element *list.Element[singtun.DefaultInterfaceUpdateCallback]) {
+	if element == nil {
+		return
+	}
+	m.access.Lock()
+	defer m.access.Unlock()
+	m.callbacks.Remove(element)
+}
+
+func (m *fireflyInterfaceMonitor) RegisterMyInterface(interfaceName string) {
+	m.access.Lock()
+	defer m.access.Unlock()
+	m.myInterface = interfaceName
+}
+
+func (m *fireflyInterfaceMonitor) MyInterface() string {
+	m.access.Lock()
+	defer m.access.Unlock()
+	return m.myInterface
+}
+
+func (m *fireflyInterfaceMonitor) emit(defaultInterface *control.Interface, flags int) {
+	m.access.Lock()
+	callbacks := m.callbacks.Array()
+	m.access.Unlock()
+	for _, callback := range callbacks {
+		callback(defaultInterface, flags)
+	}
+}
+
 func (p *fireflyPlatform) CreateDefaultInterfaceMonitor(logger logger.Logger) singtun.DefaultInterfaceMonitor {
-	return nil
+	return &fireflyInterfaceMonitor{}
 }
 
 func (p *fireflyPlatform) UsePlatformNetworkInterfaces() bool {
@@ -128,6 +229,8 @@ func startCore(configJSON string, tunFd int) error {
 	}
 	platform := &fireflyPlatform{tunFd: tunFd}
 	ctx := context.Background()
+	// include.Context 注册全部入站/出站/端点/DNS/服务实现
+	ctx = include.Context(ctx)
 	ctx = service.ContextWith[adapter.PlatformInterface](ctx, platform)
 	boxInstance, err := box.New(box.Options{
 		Context: ctx,
@@ -158,9 +261,6 @@ func stopCore() error {
 func FireflyStart(configJSON *C.char, tunFd C.int) *C.char {
 	if configJSON == nil {
 		return C.CString("config is null")
-	}
-	if tunFd < 0 {
-		return C.CString("invalid tun fd")
 	}
 	if err := startCore(C.GoString(configJSON), int(tunFd)); err != nil {
 		return C.CString(err.Error())

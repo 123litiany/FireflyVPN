@@ -1,0 +1,9 @@
+{
+  global:
+    FireflyStart;
+    FireflyStop;
+    FireflyVersion;
+    FireflyFree;
+  local:
+    *;
+};

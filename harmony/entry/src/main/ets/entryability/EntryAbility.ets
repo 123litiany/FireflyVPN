@@ -42,7 +42,8 @@ export default class EntryAbility extends UIAbility {
       }
       try {
         const mainWindow: window.Window = windowStage.getMainWindowSync();
-        mainWindow.setWindowLayoutFullScreen(true);
+        // 关闭全屏布局，避免页面标题栏与状态栏重叠（曾导致“+ 添加”按钮被状态栏遮挡）
+        mainWindow.setWindowLayoutFullScreen(false);
       } catch (e) {
         RuntimeLog.warn(TAG, '系统栏配置失败');
       }

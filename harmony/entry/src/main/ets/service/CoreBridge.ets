@@ -3,7 +3,11 @@
  *
  * Android 通过 libbox.aar（sing-box）提供转发能力；鸿蒙版通过 NAPI 模块
  * libfirefly.so 加载 libfireflycore.so（Go + sing-box）。
- * 内核缺失或 ABI 不匹配时 isAvailable() 返回 false，扩展不会建立 TUN。
+ *
+ * 重要：Go 运行时只能在 **VPN 扩展进程** 中加载。主界面进程如果 dlopen
+ * 该库，Go 的后台线程会与 ArkTS 运行时冲突并崩溃（已在模拟器复现）。
+ * 因此 UI 只根据构建期常量展示状态，真正的加载发生在
+ * FireflyVpnExtension 的 onCreate 中。
  */
 import { start as nativeStart, stop as nativeStop, version as nativeVersion } from 'libfirefly.so';
 import http from '@ohos.net.http';
@@ -11,6 +15,10 @@ import { AppConfig } from '../common/AppConfig';
 import { RuntimeLog } from '../util/Utils';
 
 const TAG: string = 'CoreBridge';
+
+/** 构建期常量：当前 HAP 是否打包了 sing-box 原生内核 */
+export const CORE_BUNDLED: boolean = true;
+const CORE_VERSION_LABEL: string = 'fireflycore/0.1.0 (sing-box 1.13.9)';
 
 export class TrafficStats {
   downloadBytesPerSecond: number = 0;
@@ -25,31 +33,19 @@ interface ClashConnections {
 }
 
 export class CoreBridge {
-  private static cachedVersion: string = '';
-
-  /** 原生内核是否可用（dlopen 成功且符号齐全） */
+  /** 仅用于 UI 展示，不加载原生库 */
   static isAvailable(): boolean {
-    return !CoreBridge.version().startsWith('unavailable');
+    return CORE_BUNDLED;
   }
 
   static version(): string {
-    if (CoreBridge.cachedVersion.length > 0) {
-      return CoreBridge.cachedVersion;
-    }
-    let value: string = 'unavailable';
-    try {
-      value = nativeVersion();
-    } catch (e) {
-      value = `unavailable (${JSON.stringify(e)})`;
-    }
-    CoreBridge.cachedVersion = value;
-    return value;
+    return CORE_BUNDLED ? CORE_VERSION_LABEL : 'not-bundled';
   }
 
   /**
-   * 启动内核。
-   * @param configJson sing-box 配置（tun 入站的 fd 由原生层接管）
-   * @param tunFd 系统分配的 TUN 文件描述符
+   * 启动内核（只能在 VPN 扩展进程中调用）。
+   * @param configJson sing-box 配置
+   * @param tunFd 系统分配的 TUN fd；自检时传 -1
    */
   static async start(configJson: string, tunFd: number): Promise<void> {
     RuntimeLog.info(TAG, `启动内核，配置 ${configJson.length} 字节，fd=${tunFd}`);
@@ -77,29 +73,35 @@ export class CoreBridge {
     }
   }
 
+  /** 原生库自检：返回版本或加载错误（仅限 VPN 扩展/独立进程调用） */
+  static nativeVersionProbe(): string {
+    try {
+      return nativeVersion();
+    } catch (e) {
+      return `unavailable (${JSON.stringify(e)})`;
+    }
+  }
+
   private static lastDownloadTotal: number = 0;
   private static lastUploadTotal: number = 0;
   private static lastSampleTime: number = 0;
 
   /**
    * 流量统计：读取 sing-box clash_api 的累计字节并换算速率。
-   * 内核未运行时返回 null，UI 保持 0 而不是伪造数据。
+   * 这是纯 HTTP 查询，不会在 UI 进程加载 Go 运行时。
    */
   static async queryTraffic(): Promise<TrafficStats | null> {
-    if (!CoreBridge.isAvailable()) {
-      return null;
-    }
     const request: http.HttpRequest = http.createHttp();
     try {
-      const options: http.HttpRequestOptions = {
-        method: http.RequestMethod.GET,
-        expectDataType: http.HttpDataType.STRING,
-        connectTimeout: 1500,
-        readTimeout: 1500,
-        usingCache: false
-      };
       const response: http.HttpResponse = await request.request(
-        `http://127.0.0.1:${AppConfig.CLASH_API_PORT}/connections`, options);
+        `http://127.0.0.1:${AppConfig.CLASH_API_PORT}/connections`,
+        {
+          method: http.RequestMethod.GET,
+          expectDataType: http.HttpDataType.STRING,
+          connectTimeout: 1500,
+          readTimeout: 1500,
+          usingCache: false
+        });
       if (response.responseCode !== 200 || typeof response.result !== 'string') {
         return null;
       }

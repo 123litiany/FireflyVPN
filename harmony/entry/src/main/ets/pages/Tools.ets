@@ -14,6 +14,7 @@ import { LatencyTester } from '../net/LatencyTester';
 import { SpeedTester, SpeedResult } from '../net/SpeedTester';
 import { ConfigGenerator } from '../util/ConfigGenerator';
 import { HttpClient } from '../net/HttpClient';
+import { CoreBridge } from '../service/CoreBridge';
 import { RuntimeLog } from '../util/Utils';
 
 const TAG: string = 'ToolsPage';
@@ -36,6 +37,7 @@ struct Tools {
   @State speedResult: string = '';
   @State ipResult: string = '';
   @State exportResult: string = '';
+  @State coreTestResult: string = '';
 
   private async runLatencyTest(): Promise<void> {
     if (this.busy) {
@@ -119,8 +121,7 @@ struct Tools {
     }
   }
 
-  private async exportConfig(): Promise<void> {
-    try {
+  private async exportConfig(): Promise<void> {    try {
       const settings = SettingsStore.load();
       const nodes: Node[] = await Database.loadNodes();
       let target: Node | null = null;
@@ -227,6 +228,18 @@ struct Tools {
             Text(this.ipResult)
               .fontSize(11)
               .fontColor(FireflyColors.TEXT_PRIMARY)
+              .width('100%')
+              .padding({ left: 6 })
+          }
+
+          this.toolCard('内核自检', '在 VPN 扩展进程中启动本地 mixed 入站并查询 clash_api', '说明', () => {
+            this.coreTestResult = '自检需在 VPN 扩展进程中运行；当前模拟器缺少系统 VPN 授权组件，' +
+              '请使用 adb/hdc 触发扩展自检或在真机连接时验证。';
+          })
+          if (this.coreTestResult.length > 0) {
+            Text(this.coreTestResult)
+              .fontSize(11)
+              .fontColor(FireflyColors.TEXT_SECONDARY)
               .width('100%')
               .padding({ left: 6 })
           }

@@ -207,28 +207,6 @@ struct Index {
     return `${type as string}`.toUpperCase();
   }
 
-  @Builder
-  quickAction(title: string, subtitle: string, page: string, accent: string) {
-    Column({ space: 4 }) {
-      Text(title)
-        .fontSize(15)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(FireflyColors.TEXT_PRIMARY)
-      Text(subtitle)
-        .fontSize(11)
-        .fontColor(FireflyColors.TEXT_SECONDARY)
-    }
-    .layoutWeight(1)
-    .height(72)
-    .justifyContent(FlexAlign.Center)
-    .backgroundColor(FireflyColors.SURFACE)
-    .borderRadius(14)
-    .onClick(() => {
-      router.pushUrl({ url: page });
-    })
-    .border({ width: 1, color: accent })
-  }
-
   build() {
     Stack() {
       Column()
@@ -381,11 +359,49 @@ struct Index {
         .width('92%')
         .padding({ top: 5, bottom: 5 })
 
-        // 快捷入口
+        // 快捷入口（直接读取 @State，避免 @Builder 值参数不随状态刷新）
         Row({ space: 10 }) {
-          this.quickAction('节点', `${this.nodeCount} 个可用`, 'pages/Nodes', FireflyColors.SURFACE_LIGHT)
-          this.quickAction('订阅', `${this.groupCount} 个分组`, 'pages/Subscriptions', FireflyColors.SURFACE_LIGHT)
-          this.quickAction('工具箱', '测速 / 延迟', 'pages/Tools', FireflyColors.SURFACE_LIGHT)
+          Column({ space: 4 }) {
+            Text('节点').fontSize(15).fontWeight(FontWeight.Medium).fontColor(FireflyColors.TEXT_PRIMARY)
+            Text(`${this.nodeCount} 个可用`).fontSize(11).fontColor(FireflyColors.TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .height(72)
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor(FireflyColors.SURFACE)
+          .borderRadius(14)
+          .border({ width: 1, color: FireflyColors.SURFACE_LIGHT })
+          .onClick(() => {
+            router.pushUrl({ url: 'pages/Nodes' });
+          })
+
+          Column({ space: 4 }) {
+            Text('订阅').fontSize(15).fontWeight(FontWeight.Medium).fontColor(FireflyColors.TEXT_PRIMARY)
+            Text(`${this.groupCount} 个分组`).fontSize(11).fontColor(FireflyColors.TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .height(72)
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor(FireflyColors.SURFACE)
+          .borderRadius(14)
+          .border({ width: 1, color: FireflyColors.SURFACE_LIGHT })
+          .onClick(() => {
+            router.pushUrl({ url: 'pages/Subscriptions' });
+          })
+
+          Column({ space: 4 }) {
+            Text('工具箱').fontSize(15).fontWeight(FontWeight.Medium).fontColor(FireflyColors.TEXT_PRIMARY)
+            Text('测速 / 延迟').fontSize(11).fontColor(FireflyColors.TEXT_SECONDARY)
+          }
+          .layoutWeight(1)
+          .height(72)
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor(FireflyColors.SURFACE)
+          .borderRadius(14)
+          .border({ width: 1, color: FireflyColors.SURFACE_LIGHT })
+          .onClick(() => {
+            router.pushUrl({ url: 'pages/Tools' });
+          })
         }
         .width('92%')
         .margin({ top: 4 })

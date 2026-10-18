@@ -271,7 +271,7 @@ export class Database {
     const predicates: relationalStore.RdbPredicates = new relationalStore.RdbPredicates('subscription_groups');
     predicates.orderByAsc('sortOrder');
     const resultSet: relationalStore.ResultSet = await store.query(predicates);
-    const groups: SubscriptionGroupSummary[] = [];
+    const groups: SubscriptionGroup[] = [];
     try {
       while (resultSet.goToNextRow()) {
         const group: SubscriptionGroup = new SubscriptionGroup();
@@ -286,15 +286,21 @@ export class Database {
         group.lastNodeCount = resultSet.getLong(resultSet.getColumnIndex('lastNodeCount'));
         group.sortOrder = resultSet.getLong(resultSet.getColumnIndex('sortOrder'));
         group.createdAt = resultSet.getLong(resultSet.getColumnIndex('createdAt'));
-        const summary: SubscriptionGroupSummary = new SubscriptionGroupSummary();
-        summary.group = group;
-        summary.links = await Database.loadLinks(group.id);
-        groups.push(summary);
+        groups.push(group);
       }
     } finally {
       resultSet.close();
     }
-    return groups;
+    // 结果集关闭后再查询链接，避免 SQLite 游标嵌套导致查询失败
+    const summaries: SubscriptionGroupSummary[] = [];
+    for (const group of groups) {
+      const summary: SubscriptionGroupSummary = new SubscriptionGroupSummary();
+      summary.group = group;
+      summary.links = await Database.loadLinks(group.id);
+      summaries.push(summary);
+    }
+    RuntimeLog.info(TAG, `读取订阅分组 ${summaries.length} 个`);
+    return summaries;
   }
 
   static async loadLinks(groupId: string): Promise<SubscriptionLink[]> {

@@ -2,6 +2,7 @@
  * 通用工具：Base64、URL 解码、稳定 ID、日志总线
  */
 import util from '@ohos.util';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import { AppConfig } from '../common/AppConfig';
 
 /** 兼容 URL-safe Base64 与缺失 padding 的解码 */
@@ -123,6 +124,14 @@ export class LogEntry {
     const d: Date = new Date();
     const pad = (n: number): string => n < 10 ? `0${n}` : `${n}`;
     this.time = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const line: string = `${this.time} ${tag} ${message}`;
+    if (level === LogLevel.ERROR) {
+      hilog.error(0x0000, 'FireflyVPN', '%{public}s', line);
+    } else if (level === LogLevel.WARN) {
+      hilog.warn(0x0000, 'FireflyVPN', '%{public}s', line);
+    } else {
+      hilog.info(0x0000, 'FireflyVPN', '%{public}s', line);
+    }
     console.info(`[FireflyVPN][${tag}] ${message}`);
   }
 }

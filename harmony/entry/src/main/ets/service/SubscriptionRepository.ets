@@ -33,7 +33,7 @@ export class SubscriptionRepository {
     summary.group.createdAt = nowMs();
     summary.links = [];
     await Database.saveGroup(summary);
-    RuntimeLog.info(TAG, '已创建默认订阅分组');
+    RuntimeLog.info(TAG, `已创建默认订阅分组 ${summary.group.id}`);
     return summary;
   }
 

@@ -87,3 +87,18 @@ Android 平台依赖集中在：
   DNS 与 TLS 根证书。
 - 若内核加载失败，应用会明确报错并拒绝创建 TUN，不会造成全局断网。
 - 系统 VPN 授权对话框与 `startVpnExtensionAbility` 的实际行为需要真机确认。
+
+## 2026-10-18 模拟器实测补充
+
+- Go c-shared 的 initial-exec TLS 在 musl 上不能 `dlopen`，已改用
+  OpenHarmony Go 工具链（TLSDESC），内核在扩展进程中加载、启动并通过
+  clash_api 自检。详见 `docs/VERIFICATION.md`。
+- sing-box 在存在 `PlatformInterface` 时必调用
+  `CreateDefaultInterfaceMonitor()`，必须返回可用对象，否则空指针崩溃；
+  包装层已实现基于 `net.Interfaces()` 的监控。
+- 不能用 `with_naive_outbound`：它会静态链接 Cronet，导出 `malloc/free`
+  并劫持进程分配器，造成 ArkTS 崩溃；当前不支持 Naive。
+- Go 运行时只能在 VPN 扩展进程加载，UI 进程不得 `dlopen` 内核。
+- 模拟器镜像缺少 `com.huawei.hmos.vpndialog`，无法完成 VPN 授权；
+  TUN 创建与转发仍需真机验证。
+

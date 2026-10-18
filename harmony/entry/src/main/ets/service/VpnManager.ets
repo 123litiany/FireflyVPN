@@ -25,6 +25,14 @@ export class VpnManager {
   private static message: string = '';
   private static observer: vpnExtension.VpnObserver | null = null;
   private static observerReady: boolean = false;
+  private static connectTimer: number = -1;
+
+  private static clearConnectTimer(): void {
+    if (VpnManager.connectTimer >= 0) {
+      clearTimeout(VpnManager.connectTimer);
+      VpnManager.connectTimer = -1;
+    }
+  }
 
   /** 注册系统 VPN 授权结果回调（API 26+） */
   private static ensureObserver(): void {
@@ -59,6 +67,9 @@ export class VpnManager {
   static setState(state: VpnState, message: string): void {
     VpnManager.state = state;
     VpnManager.message = message;
+    if (state !== VpnState.CONNECTING) {
+      VpnManager.clearConnectTimer();
+    }
     VpnEvents.emitState(state, message);
   }
 
@@ -72,6 +83,14 @@ export class VpnManager {
     try {
       await vpnExtension.startVpnExtensionAbility(AppContext.vpnWant());
       RuntimeLog.info(TAG, 'VPN 扩展启动请求已提交');
+      VpnManager.clearConnectTimer();
+      VpnManager.connectTimer = setTimeout(() => {
+        if (VpnManager.state === VpnState.CONNECTING) {
+          VpnManager.setState(VpnState.ERROR,
+            '未收到系统 VPN 授权。模拟器缺少 VPN 授权组件（com.huawei.hmos.vpndialog），请在真机确认授权弹窗');
+          RuntimeLog.error(TAG, '等待 VPN 授权超时');
+        }
+      }, 15000);
     } catch (err) {
       const error: BusinessError = err as BusinessError;
       VpnManager.setState(VpnState.ERROR, `启动 VPN 扩展失败: ${error.code} ${error.message}`);
