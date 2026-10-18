@@ -213,7 +213,7 @@ npm test
 - 已实现：主界面、节点与订阅管理、sing-box 配置生成、延迟测试、下载测速、出口 IP 查询、运行日志、设置，以及 `VpnExtensionAbility` + Go/sing-box 原生内核（`libfireflycore.so`）
 - 构建 HAP：`pwsh harmony/scripts/build-hap.ps1`（需要 DevEco Studio 26）
 - 构建内核：`pwsh harmony/scripts/build-core.ps1`（需要 Go 1.24+ 与 OHOS NDK）
-- 当前状态：**构建级预览**。内核已完成 arm64/x86_64 交叉编译并打进 HAP，但本机没有调试签名证书，尚未完成真机运行验证
+- 当前状态：**模拟器已验证客户端与内核**（HarmonyOS 7.0 API 26，x86_64）。订阅、节点、数据库、sing-box 内核加载与 clash_api 自检均通过；模拟器镜像缺少系统 VPN 授权组件（`com.huawei.hmos.vpndialog`），TUN 与真实转发仍需真机验证
 - 详细说明：[harmony/README.md](./harmony/README.md)、[harmony/docs/PORTING.md](./harmony/docs/PORTING.md)
 
 <a id="docs"></a>
