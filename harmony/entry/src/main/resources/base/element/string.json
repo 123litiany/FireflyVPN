@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "HoProxy entry module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "HoProxy main ability"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "HoProxy"
+    },
+    {
+      "name": "vpn_extension_desc",
+      "value": "HoProxy VPN extension"
+    }
+  ]
+}

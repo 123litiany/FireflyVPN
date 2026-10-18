@@ -1,0 +1,19 @@
+# 构建产物
+build/
+build-*/
+.hvigor/
+.cxx/
+oh_modules/
+entry/libs/arm64-v8a/*.so
+entry/libs/x86_64/*.so
+*.hap
+*.hsp
+*.har
+local.properties
+.idea/
+.DS_Store
+
+# 原生内核源码的构建输出
+core/fireflycore/libfireflycore*.so
+core/fireflycore/libfireflycore*.h
+core/sing-box/

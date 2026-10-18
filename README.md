@@ -184,6 +184,7 @@ APK 输出位于 app/build/outputs/apk/。发布版本使用：
 │       └── jniLibs/             UnlockTests 原生库
 ├── backend/                     Cloudflare Workers 后端（含 D1 迁移）
 ├── protocol/crypto-v2/          协议说明与跨平台测试向量
+├── harmony/                     HarmonyOS 移植（ArkTS/ArkUI，API 26）
 └── images/                      README 图片
 ~~~
 
@@ -203,6 +204,17 @@ npm test
 ~~~
 
 涉及 VPN、TUN、Android Keystore、二维码或 Native 库的功能，还应在真机上验证。
+
+<a id="harmonyos"></a>
+## 🕊️ HarmonyOS 版本
+
+`harmony/` 是基于 ArkTS/ArkUI 的原生移植，目标 HarmonyOS 26.0.0（API 26，兼容 HarmonyOS 7.0）。
+
+- 已实现：主界面、节点与订阅管理、sing-box 配置生成、延迟测试、下载测速、出口 IP 查询、运行日志、设置，以及 `VpnExtensionAbility` + Go/sing-box 原生内核（`libfireflycore.so`）
+- 构建 HAP：`pwsh harmony/scripts/build-hap.ps1`（需要 DevEco Studio 26）
+- 构建内核：`pwsh harmony/scripts/build-core.ps1`（需要 Go 1.24+ 与 OHOS NDK）
+- 当前状态：**构建级预览**。内核已完成 arm64/x86_64 交叉编译并打进 HAP，但本机没有调试签名证书，尚未完成真机运行验证
+- 详细说明：[harmony/README.md](./harmony/README.md)、[harmony/docs/PORTING.md](./harmony/docs/PORTING.md)
 
 <a id="docs"></a>
 ## 📚 相关文档

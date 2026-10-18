@@ -1,0 +1,30 @@
+# 第三方组件与许可证声明
+
+本目录（FireflyVPN HarmonyOS 移植）是 FireflyVPN 的衍生作品，遵循
+GNU General Public License v3.0（见仓库根目录 `LICENSE`）。
+
+## sing-box
+
+- 项目：https://github.com/SagerNet/sing-box
+- 版本：v1.13.9
+- 许可证：GPL-3.0-or-later
+- 用法：作为 Go 库编译为 `libfireflycore.so`，由 `fireflycore` 包装层通过
+  `adapter.PlatformInterface` 接管 HarmonyOS TUN fd。
+- 对应源码：仓库 `core/fireflycore`（包装层）与
+  `scripts/build-core.ps1`（构建脚本）；sing-box 源码按上述上游版本获取。
+
+## 其他 Go 依赖
+
+sing-box 的传递依赖（quic-go、gvisor、sing-tun、sing 等）均为
+GPL 兼容的开源组件，具体版本见 `core/fireflycore/go.mod` 与 `go.sum`。
+
+## 图标与素材
+
+移植版未复制 Android 端的 mipmap/webp 图标，使用占位图标
+（`AppScope/resources/base/media/app_icon.png` 等）。上游 FireflyVPN
+的图标与截图版权归其作者所有；如需使用请从上游仓库获取并遵守其许可。
+
+## 免责声明
+
+本项目仅用于学习、研究与技术交流。使用者应遵守所在地区法律法规与
+网络服务条款。作者不对使用本项目产生的任何后果负责。

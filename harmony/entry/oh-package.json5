@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "FireflyVPN for HarmonyOS entry module",
+  "main": "",
+  "author": "Iskongkongyo",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "libfirefly.so": "file:./src/main/cpp/types/libfirefly"
+  }
+}

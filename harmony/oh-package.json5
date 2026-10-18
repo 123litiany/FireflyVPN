@@ -1,0 +1,11 @@
+{
+  "modelVersion": "5.1.0",
+  "name": "ohproxy",
+  "version": "0.1.0",
+  "description": "Open-source proxy client for HarmonyOS (clean-room implementation)",
+  "main": "",
+  "author": "123litiany",
+  "license": "GPL-3.0",
+  "dependencies": {},
+  "devDependencies": {}
+}

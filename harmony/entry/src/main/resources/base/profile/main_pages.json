@@ -1,0 +1,10 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/Nodes",
+    "pages/Subscriptions",
+    "pages/Settings",
+    "pages/Logs",
+    "pages/Tools"
+  ]
+}
