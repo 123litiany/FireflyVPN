@@ -60,8 +60,8 @@ NEEDED: libc.so
 
 ### 4. HAP 打包与内容检查
 
-`entry-default-unsigned.hap`：37,271,872 B
-SHA256：`e7341bc3ef2b7768537e92dee92e44fb18744479f859c4636995997c130bf329`
+`entry-default-unsigned.hap`：37,271,888 B
+SHA256：`f49427300d77a6b5ad03941a8f9dccc72c3051c3a21794c3ca34c903718c4598`
 
 包内关键条目：
 
