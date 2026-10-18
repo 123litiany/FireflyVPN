@@ -2,19 +2,19 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "HoProxy entry module"
+      "value": "FireflyVPN HarmonyOS 客户端"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "HoProxy main ability"
+      "value": "FireflyVPN 主界面"
     },
     {
       "name": "EntryAbility_label",
-      "value": "HoProxy"
+      "value": "FireflyVPN"
     },
     {
       "name": "vpn_extension_desc",
-      "value": "HoProxy VPN extension"
+      "value": "FireflyVPN VPN 扩展"
     }
   ]
 }
